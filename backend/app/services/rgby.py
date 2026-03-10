@@ -9,6 +9,30 @@ from app.models.schemas import RGBYVector
 # ── Negation words that flip GREEN → RED ──
 _NEGATION = frozenset({"not", "no", "never", "nor", "neither", "cannot"})
 
+# ── Stopwords: function words with no meaningful RGBY signal ──
+_STOPWORDS = frozenset({
+    "a", "an", "the", "is", "am", "are", "was", "were", "be", "been", "being",
+    "have", "has", "had", "do", "does", "did", "will", "would", "shall", "should",
+    "may", "might", "can", "could", "must",
+    "i", "me", "my", "mine", "we", "us", "our", "ours",
+    "you", "your", "yours", "he", "him", "his", "she", "her", "hers",
+    "it", "its", "they", "them", "their", "theirs",
+    "this", "that", "these", "those", "who", "whom", "which", "what", "whose",
+    "where", "when", "why", "how", "if", "then", "else", "so", "but", "or",
+    "and", "as", "at", "by", "for", "from", "in", "into", "of", "on", "to",
+    "up", "out", "off", "over", "with", "about", "after", "before", "between",
+    "through", "during", "above", "below", "under", "again", "further",
+    "than", "too", "very", "just", "also", "now", "here", "there", "all",
+    "each", "every", "both", "few", "more", "most", "other", "some", "such",
+    "any", "only", "own", "same", "well", "back", "even", "still",
+    "hi", "hello", "hey", "ok", "okay", "yes", "yeah", "no", "nope",
+    "please", "thanks", "thank", "sorry", "like", "get", "got", "let",
+    "go", "going", "went", "come", "came", "make", "made", "take", "took",
+    "give", "gave", "say", "said", "tell", "told", "ask", "asked",
+    "know", "knew", "think", "thought", "see", "saw", "want", "need",
+    "much", "many", "really", "quite", "rather", "enough", "already",
+})
+
 # ── Common suffix patterns for stemming ──
 _SUFFIX_RE = re.compile(
     r"(ments?|ness|tion|sion|ment|ised?|ized?|ises?|izes?"
@@ -85,8 +109,12 @@ def _lookup(word: str) -> dict | None:
     return None
 
 
-def compute_rgby(text: str) -> RGBYVector:
+def compute_rgby(text: str) -> tuple[RGBYVector, float]:
     """Score text using the 30K + 893-entry dual lexicon.
+
+    Returns (vector, confidence) where confidence is 0.0–1.0 indicating
+    how much signal was found. Low-signal text (greetings, filler) gets
+    low confidence so governance doesn't over-react.
 
     Follows the documented RGBY scoring approach:
     1. Sum R, G, B, Y values across ALL matched words
@@ -95,14 +123,20 @@ def compute_rgby(text: str) -> RGBYVector:
     4. Map percentages to 0–6 scale
     """
     words = re.findall(r"[a-zA-Z]+", text.lower())
+    # Filter out very short words (a, I, is, am, etc.)
+    content_words = [w for w in words if len(w) >= 3]
 
     totals = {"R": 0.0, "G": 0.0, "B": 0.0, "Y": 0.0}
     match_count = 0
     has_negation = False
 
-    for i, word in enumerate(words):
+    for word in words:
         if word in _NEGATION:
             has_negation = True
+
+        # Skip stopwords — they carry no meaningful RGBY signal
+        if word in _STOPWORDS:
+            continue
 
         entry = _lookup(word)
         if entry:
@@ -112,8 +146,18 @@ def compute_rgby(text: str) -> RGBYVector:
             totals["Y"] += entry["y"]
             match_count += 1
 
+    # Signal confidence: ratio of matched content words to total content words
+    # Low match ratio = low-signal text (greetings, filler, etc.)
+    if len(content_words) == 0:
+        return RGBYVector(R=3, G=3, B=3, Y=3), 0.0
+
+    confidence = min(1.0, match_count / max(len(content_words), 1))
+    # Also require a minimum absolute match count for high confidence
+    if match_count < 3:
+        confidence *= match_count / 3.0
+
     if match_count == 0:
-        return RGBYVector(R=1, G=1, B=1, Y=1)
+        return RGBYVector(R=3, G=3, B=3, Y=3), 0.0
 
     # Negation detection: "shall not", "must not" → shift GREEN → RED
     if has_negation and totals["G"] > totals["R"]:
@@ -124,7 +168,7 @@ def compute_rgby(text: str) -> RGBYVector:
     # Convert to percentages
     grand_total = sum(totals.values())
     if grand_total == 0:
-        return RGBYVector(R=1, G=1, B=1, Y=1)
+        return RGBYVector(R=3, G=3, B=3, Y=3), 0.0
 
     pct = {ch: totals[ch] / grand_total for ch in totals}
 
@@ -136,12 +180,13 @@ def compute_rgby(text: str) -> RGBYVector:
         for ch in pct
     }
 
-    return RGBYVector(**scaled)
+    return RGBYVector(**scaled), round(confidence, 3)
 
 
 def score_text(text: str) -> dict[str, int]:
     """Convenience function returning dict instead of RGBYVector."""
-    return compute_rgby(text).model_dump()
+    vector, _ = compute_rgby(text)
+    return vector.model_dump()
 
 
 def key_insight_for_vector(vector: RGBYVector) -> str:

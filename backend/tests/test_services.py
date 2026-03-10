@@ -5,13 +5,14 @@ from app.services.rle import encode_rle
 
 
 def test_rgby_returns_bounded_vector():
-    vector = compute_rgby("The system must follow procedure. There is risk and ambiguity.")
+    vector, confidence = compute_rgby("The system must follow procedure. There is risk and ambiguity.")
     for value in vector.model_dump().values():
         assert 0 <= value <= 6
+    assert 0.0 <= confidence <= 1.0
 
 
 def test_rle_format():
-    vector = compute_rgby("risk procedure")
+    vector, _ = compute_rgby("risk procedure")
     assert encode_rle(vector).endswith("Y")
 
 

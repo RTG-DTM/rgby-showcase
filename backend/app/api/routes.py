@@ -33,7 +33,7 @@ async def analyze(file: UploadFile = File(...)) -> AnalyzeResponse:
     except UnicodeDecodeError as exc:
         raise HTTPException(status_code=400, detail="file must be utf-8 text") from exc
 
-    vector = compute_rgby(text)
+    vector, _ = compute_rgby(text)
     rle = encode_rle(vector)
     cnvf = compute_cnvf(text)
     contradictions = find_contradictions(text)
@@ -56,7 +56,7 @@ async def analyze(file: UploadFile = File(...)) -> AnalyzeResponse:
 async def chat(request: ChatRequest) -> ChatResponse:
     text = request.text
 
-    user_vector = compute_rgby(text)
+    user_vector, user_confidence = compute_rgby(text)
     user_rle = encode_rle(user_vector)
     user_hex = generate_hex_signature(user_vector)
     user_cnvf = compute_cnvf(text)
@@ -66,7 +66,7 @@ async def chat(request: ChatRequest) -> ChatResponse:
 
     ai_text, llm_provider = await generate_response(text, user_vector)
 
-    ai_vector = compute_rgby(ai_text)
+    ai_vector, ai_confidence = compute_rgby(ai_text)
     ai_rle = encode_rle(ai_vector)
     ai_hex = generate_hex_signature(ai_vector)
     ai_cnvf = compute_cnvf(ai_text)
@@ -74,7 +74,10 @@ async def chat(request: ChatRequest) -> ChatResponse:
     ai_insight = key_insight_for_vector(ai_vector)
 
     # Combined drift uses both user + AI distance from anchor
-    drift_from_anchor = compute_combined_drift(user_vector, ai_vector)
+    # Confidence dampens drift for low-signal text (greetings, filler)
+    drift_from_anchor = compute_combined_drift(
+        user_vector, ai_vector, user_confidence, ai_confidence
+    )
     # CNVF for governance uses the AI response (longer, more measurable)
     combined_cnvf = (user_cnvf + ai_cnvf) / 2
     csgas_state = determine_csgas_state(combined_cnvf, drift_from_anchor)

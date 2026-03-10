@@ -30,11 +30,23 @@ def compute_anchor_drift(vector: RGBYVector) -> float:
     )
 
 
-def compute_combined_drift(user: RGBYVector, ai: RGBYVector) -> float:
-    """Combined drift: average of user and AI distance from anchor."""
+def compute_combined_drift(
+    user: RGBYVector,
+    ai: RGBYVector,
+    user_confidence: float = 1.0,
+    ai_confidence: float = 1.0,
+) -> float:
+    """Combined drift: weighted average of user and AI distance from anchor.
+
+    When signal confidence is low (greetings, filler text), drift is dampened
+    so governance doesn't over-react to text with insufficient signal.
+    """
     user_drift = compute_anchor_drift(user)
     ai_drift = compute_anchor_drift(ai)
-    return (user_drift + ai_drift) / 2
+    raw = (user_drift + ai_drift) / 2
+    # Dampen drift by average confidence — low-signal text → drift pushed toward 0
+    avg_confidence = (user_confidence + ai_confidence) / 2
+    return raw * avg_confidence
 
 
 def determine_csgas_state(cnvf: float, drift_from_anchor: float) -> CSGASState:

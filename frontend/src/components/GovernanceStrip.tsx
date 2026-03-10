@@ -8,8 +8,8 @@ interface Props {
 const STATE_COLORS: Record<string, string> = {
   STABLE: 'var(--green)',
   MINOR_DRIFT: 'var(--yellow)',
-  MAJOR_DRIFT: 'var(--red)',
-  CRITICAL: '#ff006e',
+  MAJOR_DRIFT: '#ff9800',
+  CRITICAL: 'var(--red)',
 };
 
 export default function GovernanceStrip({ analysis, turnNumber }: Props) {
@@ -17,13 +17,15 @@ export default function GovernanceStrip({ analysis, turnNumber }: Props) {
   const drift = analysis?.drift_from_anchor ?? 0;
   const userRgby = analysis?.user.rgby;
   const cnvf = analysis?.ai.cnvf ?? 0;
+  const stateColor = STATE_COLORS[csgas] ?? 'var(--text-3)';
 
   return (
     <div className="state-strip">
       <div className="state-card">
         <div className="state-label">CS-GAS State</div>
-        <div className="state-value" style={{ color: STATE_COLORS[csgas] ?? 'var(--text-3)' }}>
-          {csgas}
+        <div className="state-value">
+          <span className="state-indicator" style={{ background: stateColor }} />
+          <span style={{ color: stateColor }}>{csgas}</span>
         </div>
       </div>
       <div className="state-card">
@@ -50,7 +52,7 @@ export default function GovernanceStrip({ analysis, turnNumber }: Props) {
       <div className="state-card">
         <div className="state-label">CNVF / Turn</div>
         <div className="state-value">
-          <span style={{ color: cnvf >= 0.75 ? 'var(--green)' : cnvf >= 0.45 ? 'var(--yellow)' : 'var(--red)' }}>
+          <span style={{ color: cnvf >= 0.55 ? 'var(--green)' : cnvf >= 0.30 ? 'var(--yellow)' : 'var(--red)' }}>
             {cnvf.toFixed(3)}
           </span>
           <span style={{ color: 'var(--text-3)', fontSize: 13, marginLeft: 8 }}>T{turnNumber - 1}</span>

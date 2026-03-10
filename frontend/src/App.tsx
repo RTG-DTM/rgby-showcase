@@ -160,15 +160,27 @@ export default function App() {
 
       {/* Footer */}
       <footer className="app-footer">
-        <div className="footer-dots">
-          <span className="logo-dot rd" />
-          <span className="logo-dot gn" />
-          <span className="logo-dot bl" />
-          <span className="logo-dot yw" />
+        <div className="footer-inner">
+          <div className="footer-brand">
+            <div className="footer-dots">
+              <span className="logo-dot rd" />
+              <span className="logo-dot gn" />
+              <span className="logo-dot bl" />
+              <span className="logo-dot yw" />
+            </div>
+            <div>
+              <div className="footer-title">RGBY Cognition Control System</div>
+              <div className="footer-tagline">A deterministic control layer for non-deterministic AI.</div>
+            </div>
+          </div>
+          <div className="footer-links">
+            <button className="footer-link" onClick={() => scrollTo('hero')}>Overview</button>
+            <button className="footer-link" onClick={() => scrollTo('pipeline')}>Architecture</button>
+            <button className="footer-link" onClick={() => scrollTo('live')}>Live Demo</button>
+            <button className="footer-link" onClick={() => scrollTo('layers')}>Deep Dive</button>
+          </div>
+          <div className="footer-copy">&copy; 2024–2026 RTG Enterprises. All rights reserved.</div>
         </div>
-        RGBY Cognition Control System — RTG Enterprises &copy; 2024–2026
-        <br />
-        <span style={{ color: 'var(--text-3)' }}>A deterministic control layer for non-deterministic AI.</span>
       </footer>
     </>
   );

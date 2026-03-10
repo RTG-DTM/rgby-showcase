@@ -9,7 +9,7 @@ from app.services.audit import payload_hash
 from app.services.chat_engine import generate_response
 from app.services.cnvf import compute_cnvf
 from app.services.contradictions import find_contradictions
-from app.services.csgas import classify_drift, compute_anchor_drift, determine_csgas_state
+from app.services.csgas import classify_drift, compute_anchor_drift, compute_combined_drift, determine_csgas_state
 from app.services.hex_signature import generate_hex_signature
 from app.services.rgby import compute_rgby, key_insight_for_vector
 from app.services.rle import encode_rle
@@ -73,8 +73,11 @@ async def chat(request: ChatRequest) -> ChatResponse:
     ai_drift = classify_drift(ai_cnvf)
     ai_insight = key_insight_for_vector(ai_vector)
 
-    drift_from_anchor = compute_anchor_drift(user_vector)
-    csgas_state = determine_csgas_state(user_cnvf, drift_from_anchor)
+    # Combined drift uses both user + AI distance from anchor
+    drift_from_anchor = compute_combined_drift(user_vector, ai_vector)
+    # CNVF for governance uses the AI response (longer, more measurable)
+    combined_cnvf = (user_cnvf + ai_cnvf) / 2
+    csgas_state = determine_csgas_state(combined_cnvf, drift_from_anchor)
 
     audit_h = payload_hash({
         "turn": request.turn_number,

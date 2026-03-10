@@ -5,14 +5,16 @@ interface Props {
 }
 
 export default function MessageBubble({ message }: Props) {
-  const { role, text, analysis, auditHash, turnNumber, llmProvider } = message;
+  const { role, text, analysis, auditHash, turnNumber, timestamp, llmProvider } = message;
   const metrics = role === 'ai' && analysis ? analysis.ai : role === 'user' && analysis ? analysis.user : null;
+
+  const time = new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
   return (
     <div className={`msg-bubble msg-${role}`}>
       <div className="msg-header">
         <span className="msg-role">{role === 'user' ? 'USER' : 'AI'}</span>
-        <span className="msg-turn">T{turnNumber}</span>
+        <span className="msg-turn">T{turnNumber} &middot; {time}</span>
       </div>
       <div className="msg-text">{text}</div>
       {metrics && (
@@ -28,11 +30,11 @@ export default function MessageBubble({ message }: Props) {
           <span className="metric-pill mono">CNVF: {metrics.cnvf.toFixed(3)}</span>
         </div>
       )}
-      {auditHash && role === 'ai' && (
-        <div className="msg-hash">SHA256: {auditHash.slice(0, 16)}...</div>
-      )}
-      {llmProvider && role === 'ai' && (
-        <div className="msg-provider">via {llmProvider}</div>
+      {(auditHash || llmProvider) && role === 'ai' && (
+        <div className="msg-footer">
+          {auditHash && <span className="msg-hash">SHA256: {auditHash.slice(0, 16)}...</span>}
+          {llmProvider && <span className="msg-provider">{llmProvider}</span>}
+        </div>
       )}
     </div>
   );

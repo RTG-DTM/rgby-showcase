@@ -15,6 +15,8 @@ export interface TrajectoryPoint {
   turn: number;
   user: { r: number; g: number; b: number; y: number };
   ai: { r: number; g: number; b: number; y: number };
+  userHex: string;
+  aiHex: string;
   driftFromAnchor: number;
   csgas: string;
 }
@@ -73,6 +75,8 @@ export function useChat() {
           b: res.analysis.ai.rgby.B,
           y: res.analysis.ai.rgby.Y,
         },
+        userHex: res.analysis.user.hex,
+        aiHex: res.analysis.ai.hex,
         driftFromAnchor: res.analysis.drift_from_anchor,
         csgas: res.analysis.csgas_state,
       };

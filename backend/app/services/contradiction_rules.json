@@ -1,0 +1,18 @@
+[
+  {
+    "id": "C-001",
+    "severity": "high",
+    "patterns": ["must", "may"],
+    "type": "Duty boundary ambiguity",
+    "description": "Mandatory and discretionary language appear in the same governed context.",
+    "evidence": ["must", "may"]
+  },
+  {
+    "id": "C-002",
+    "severity": "medium",
+    "patterns": ["responsible person", "accountable person"],
+    "type": "Role overlap",
+    "description": "Potential overlap between distinct statutory roles.",
+    "evidence": ["responsible person", "accountable person"]
+  }
+]

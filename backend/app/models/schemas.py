@@ -42,6 +42,7 @@ class ExportPayload(BaseModel):
 class ChatRequest(BaseModel):
     text: str
     turn_number: int = 1
+    conversation_id: str = ""
 
 
 class TurnMetrics(BaseModel):
@@ -68,3 +69,5 @@ class ChatResponse(BaseModel):
     audit_hash: str
     turn_number: int
     timestamp: datetime
+    governance_action: str = "PASS"
+    llm_provider: str = "mock"

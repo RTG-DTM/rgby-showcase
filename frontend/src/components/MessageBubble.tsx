@@ -5,7 +5,7 @@ interface Props {
 }
 
 export default function MessageBubble({ message }: Props) {
-  const { role, text, analysis, auditHash, turnNumber } = message;
+  const { role, text, analysis, auditHash, turnNumber, llmProvider } = message;
   const metrics = role === 'ai' && analysis ? analysis.ai : role === 'user' && analysis ? analysis.user : null;
 
   return (
@@ -29,7 +29,10 @@ export default function MessageBubble({ message }: Props) {
         </div>
       )}
       {auditHash && role === 'ai' && (
-        <div className="msg-hash mono">SHA256: {auditHash.slice(0, 16)}...</div>
+        <div className="msg-hash">SHA256: {auditHash.slice(0, 16)}...</div>
+      )}
+      {llmProvider && role === 'ai' && (
+        <div className="msg-provider">via {llmProvider}</div>
       )}
     </div>
   );

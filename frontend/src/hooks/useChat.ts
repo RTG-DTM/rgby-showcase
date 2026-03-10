@@ -8,6 +8,7 @@ export interface Message {
   auditHash?: string;
   turnNumber: number;
   timestamp: string;
+  llmProvider?: string;
 }
 
 export interface TrajectoryPoint {
@@ -53,6 +54,7 @@ export function useChat() {
         auditHash: res.audit_hash,
         turnNumber,
         timestamp: res.timestamp,
+        llmProvider: res.llm_provider,
       };
       setMessages(prev => [...prev, aiMsg]);
       setCurrentAnalysis(res.analysis);

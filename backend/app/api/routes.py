@@ -64,7 +64,7 @@ async def chat(request: ChatRequest) -> ChatResponse:
     user_contradictions = find_contradictions(text)
     user_insight = key_insight_for_vector(user_vector)
 
-    ai_text = generate_response(text, user_vector)
+    ai_text, llm_provider = await generate_response(text, user_vector)
 
     ai_vector = compute_rgby(ai_text)
     ai_rle = encode_rle(ai_vector)
@@ -104,4 +104,6 @@ async def chat(request: ChatRequest) -> ChatResponse:
         audit_hash=audit_h,
         turn_number=request.turn_number,
         timestamp=datetime.now(timezone.utc),
+        governance_action="FLAGGED" if csgas_state in ("MAJOR_DRIFT", "CRITICAL") else "PASS",
+        llm_provider=llm_provider,
     )

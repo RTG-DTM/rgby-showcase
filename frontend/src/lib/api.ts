@@ -30,6 +30,8 @@ export interface ChatResponse {
   audit_hash: string;
   turn_number: number;
   timestamp: string;
+  governance_action: string;
+  llm_provider: string;
 }
 
 export async function sendChat(text: string, turnNumber: number): Promise<ChatResponse> {

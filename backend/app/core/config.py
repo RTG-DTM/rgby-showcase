@@ -23,6 +23,14 @@ class Settings(BaseSettings):
     local_data_dir: Path = Path("./data")
     contradiction_patterns_file: Path = Path("./app/services/contradiction_rules.json")
 
+    # LLM settings
+    llm_provider: Literal["openai", "anthropic", "mock"] = "mock"
+    openai_api_key: str = Field(default="", validation_alias="OPENAI_API_KEY")
+    anthropic_api_key: str = Field(default="", validation_alias="ANTHROPIC_API_KEY")
+    llm_model: str = "gpt-4o"
+    llm_temperature: float = 0.7
+    llm_max_tokens: int = 500
+
 
 @lru_cache
 def get_settings() -> Settings:
